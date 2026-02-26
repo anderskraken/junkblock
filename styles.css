@@ -1,0 +1,246 @@
+/* ==========================================================================
+   JunkBlock — Badge & Tooltip Styles
+   Design language: matches oda.no's Scandinavian-minimal grocery aesthetic.
+   Nordic Garden palette: forest green (clean) / warm brick red (ultra).
+   ========================================================================== */
+
+/* ---------- CSS custom properties (on :root so tooltip in body can use them) ---------- */
+:root {
+  /* UPF — Warm Brick Red */
+  --upf-red: #b91c1c;
+  --upf-red-bg: #fef2f2;
+  --upf-red-border: #fecaca;
+  --upf-red-text: #7f1d1d;
+
+  /* Clean (Ren) — Nordic Garden Green */
+  --upf-clean: #15803d;
+  --upf-clean-bg: #f0fdf4;
+  --upf-clean-border: #bbf7d0;
+  --upf-clean-text: #166534;
+
+  --upf-radius: 12px;
+  --upf-font: "Inter var", "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --upf-tooltip-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- Wrapper (positioning anchor for tooltip) ---------- */
+.upf-badge-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 10px;
+  z-index: 1;
+}
+
+/* ---------- Badge pill ---------- */
+.upf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--upf-radius);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: var(--upf-font);
+  line-height: 1;
+  cursor: default;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+/* --- UPF variant (red, outlined style) --- */
+.upf-badge--upf {
+  background: var(--upf-red-bg);
+  color: var(--upf-red-text);
+  border-color: var(--upf-red-border);
+}
+
+.upf-badge--upf:hover {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+/* --- Clean variant (green, outlined style) --- */
+.upf-badge--clean {
+  background: var(--upf-clean-bg);
+  color: var(--upf-clean-text);
+  border-color: var(--upf-clean-border);
+}
+
+.upf-badge--clean:hover {
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+}
+
+/* ---------- Small dot indicator inside badge ---------- */
+.upf-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.upf-badge--upf .upf-badge__dot {
+  background: var(--upf-red);
+}
+
+.upf-badge--clean .upf-badge__dot {
+  background: var(--upf-clean);
+}
+
+/* ---------- Chevron icon for expandable badges ---------- */
+.upf-badge__chevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+}
+
+.upf-badge--upf .upf-badge__chevron {
+  color: var(--upf-red-text);
+}
+
+.upf-badge-wrapper--open .upf-badge__chevron {
+  transform: rotate(180deg);
+  opacity: 0.8;
+}
+
+/* ---------- Clickable UPF badge cursor ---------- */
+.upf-badge--upf {
+  cursor: pointer;
+}
+
+/* ---------- Tooltip / detail panel ---------- */
+/* Uses position:fixed + JS positioning to escape card overflow/transform */
+.upf-tooltip {
+  position: fixed;
+  min-width: 220px;
+  max-width: 300px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: var(--upf-tooltip-shadow);
+  padding: 14px 16px;
+  font-family: var(--upf-font);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+  z-index: 100000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0s 0.15s;
+  pointer-events: none;
+}
+
+.upf-tooltip--visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.15s ease, visibility 0s 0s;
+  pointer-events: auto;
+}
+
+/* Tooltip heading */
+.upf-tooltip__heading {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--upf-red-text);
+  margin: 0 0 8px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Marker list */
+.upf-tooltip__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.upf-tooltip__item {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--upf-red-bg);
+  border: 1px solid var(--upf-red-border);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--upf-red-text);
+  font-weight: 500;
+}
+
+/* "And X more" text */
+.upf-tooltip__more {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Clean tooltip (simpler) */
+.upf-tooltip--clean .upf-tooltip__heading {
+  color: var(--upf-clean-text);
+}
+
+/* ---------- Entry animation ---------- */
+@keyframes upf-badge-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.upf-badge-wrapper {
+  animation: upf-badge-enter 0.25s ease-out both;
+}
+
+/* ---------- Accessibility: respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .upf-badge-wrapper {
+    animation: none;
+  }
+  .upf-tooltip {
+    transition: none;
+  }
+  .upf-badge__chevron {
+    transition: none;
+  }
+  .upf-badge {
+    transition: none;
+  }
+}
+
+/* ---------- Dark mode support ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --upf-red: #fca5a5;
+    --upf-red-bg: #3b1515;
+    --upf-red-border: #7f1d1d;
+    --upf-red-text: #fca5a5;
+
+    --upf-clean: #4ade80;
+    --upf-clean-bg: #1a3a24;
+    --upf-clean-border: #166534;
+    --upf-clean-text: #4ade80;
+  }
+
+  .upf-tooltip {
+    background: #1f2937;
+    border-color: #374151;
+    color: #d1d5db;
+  }
+
+  .upf-tooltip__heading {
+    border-bottom-color: #374151;
+  }
+}
