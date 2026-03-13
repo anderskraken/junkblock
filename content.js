@@ -36,6 +36,30 @@
   }
 
   /**
+   * Find the product detail object in the dehydratedState queries array.
+   * Oda's query order varies, so we search for the productDetailApi query
+   * or fall back to the first query with a product-like data shape.
+   */
+  function findProductInQueries(queries) {
+    if (!Array.isArray(queries)) return null;
+    // Look for the productDetailApi query first
+    for (const q of queries) {
+      const key = q.queryKey;
+      if (Array.isArray(key) && key.some(k => k?._id === 'productDetailApi')) {
+        return q.state?.data || null;
+      }
+    }
+    // Fallback: find first query whose data has an id and detailedInfo
+    for (const q of queries) {
+      const d = q.state?.data;
+      if (d && typeof d === 'object' && d.id && (d.detailedInfo || d.fullName)) {
+        return d;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Extract ingredient text from a product data object.
    */
   function extractIngredientsFromProduct(product) {
@@ -59,7 +83,7 @@
       const resp = await fetch(url);
       if (!resp.ok) return null;
       const data = await resp.json();
-      const product = data.pageProps?.dehydratedState?.queries?.[0]?.state?.data;
+      const product = findProductInQueries(data.pageProps?.dehydratedState?.queries);
       if (!product) return null;
       return {
         id: product.id,
@@ -83,10 +107,11 @@
       return result;
     }
 
-    const { isUPF, matches } = classifyIngredients(ingredientText);
+    const activeMarkers = typeof getActiveMarkers === 'function' ? getActiveMarkers() : null;
+    const { isUPF, matches } = classifyIngredients(ingredientText, activeMarkers);
     const result = { isUPF, matches, name, noIngredients: false };
     cache.set(String(productId), result);
-    log(name, '→', isUPF ? `Ultra [${matches.join(', ')}]` : 'Ren');
+    log(name, '→', isUPF ? `Ultra [${matches.join(', ')}]` : 'Ikke UPF');
     return result;
   }
 
@@ -177,11 +202,13 @@
    * Insert a badge. For UPF products, creates a tooltip (appended to body)
    * and stores references on the wrapper for the global click handler.
    */
-  function insertBadge(target, isUPF, matches) {
+  function insertBadge(target, isUPF, matches, isIconRow) {
     if (!target || target.hasAttribute(BADGE_ATTR)) return;
 
     const wrapper = document.createElement('span');
-    wrapper.className = 'upf-badge-wrapper';
+    wrapper.className = isIconRow
+      ? 'upf-badge-wrapper upf-badge-wrapper--icon-row'
+      : 'upf-badge-wrapper';
 
     const badge = document.createElement('span');
     badge.className = isUPF ? 'upf-badge upf-badge--upf' : 'upf-badge upf-badge--clean';
@@ -191,7 +218,7 @@
     badge.appendChild(dot);
 
     const label = document.createElement('span');
-    label.textContent = isUPF ? 'Ultra' : 'Ren';
+    label.textContent = isUPF ? 'Ultra' : 'Ikke UPF';
     badge.appendChild(label);
 
     if (isUPF && matches.length > 0) {
@@ -207,12 +234,15 @@
       wrapper._upfBadge = badge;
     } else {
       wrapper.appendChild(badge);
-      badge.setAttribute('title', 'Ingen ultra-markører funnet i ingredienslisten');
+      badge.setAttribute('title', 'Ingen ultra-markører funnet – ikke UPF');
     }
 
     target.setAttribute(BADGE_ATTR, isUPF ? 'upf' : 'clean');
 
-    if (target.tagName.match(/^H[1-6]$/) || target.tagName === 'P') {
+    if (isIconRow) {
+      // In icon row: append as flex item (margin-left: auto pushes it right)
+      target.appendChild(wrapper);
+    } else if (target.tagName.match(/^H[1-6]$/) || target.tagName === 'P') {
       target.appendChild(document.createTextNode(' '));
       target.appendChild(wrapper);
     } else {
@@ -262,7 +292,7 @@
     if (!result) {
       // Try __NEXT_DATA__ first (works on full page loads)
       const nextData = getNextData();
-      const product = nextData?.props?.pageProps?.dehydratedState?.queries?.[0]?.state?.data;
+      const product = findProductInQueries(nextData?.props?.pageProps?.dehydratedState?.queries);
       if (product?.id === Number(id) && product?.detailedInfo) {
         const ingredientText = extractIngredientsFromProduct(product);
         result = classifyAndCache(product.id, product.fullName || product.name, ingredientText);
@@ -280,25 +310,34 @@
       return;
     }
 
-    // Find the product title — could be in a modal or a full page
-    // Look for an h1 that doesn't already have a badge
-    const h1s = document.querySelectorAll('h1');
-    for (const h1 of h1s) {
-      if (h1.hasAttribute(BADGE_ATTR)) continue;
-      // Check if this h1 contains the product name (or is reasonably close)
-      const h1Text = h1.textContent?.trim();
-      if (h1Text && result.name?.includes(h1Text)) {
-        insertBadge(h1, result.isUPF, result.matches);
-        return;
-      }
+    // Try to find the detail-page classifier icon row (keyhole/globe icons).
+    // Use the image-column module class to avoid matching listing-card classifiers.
+    const detailClassifier = document.querySelector(
+      '[class*="image-column"][class*="classifierWrapper"]'
+    );
+    if (detailClassifier && !detailClassifier.hasAttribute(BADGE_ATTR)) {
+      insertBadge(detailClassifier, result.isUPF, result.matches, true);
+      return;
     }
-    // Fallback: badge the first unbadged h1
-    for (const h1 of h1s) {
-      if (!h1.hasAttribute(BADGE_ATTR)) {
-        insertBadge(h1, result.isUPF, result.matches);
-        return;
+
+    // No classifier row — create one inside the detail image box
+    // (same position as keyhole/globe icons on other products)
+    const detailImageBox = document.querySelector(
+      '[class*="image-column"][class*="imageBox"]'
+    );
+    if (detailImageBox && !detailImageBox.querySelector('[' + BADGE_ATTR + ']')) {
+      let row = detailImageBox.querySelector('[' + ICON_ROW_ATTR + ']');
+      if (!row) {
+        row = document.createElement('div');
+        row.setAttribute(ICON_ROW_ATTR, '');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;align-self:flex-start;';
+        detailImageBox.appendChild(row);
       }
+      insertBadge(row, result.isUPF, result.matches, true);
+      return;
     }
+
+    // Not rendered yet — do nothing, next mutation scan will retry
   }
 
   // ─── Listing Page Scanner ─────────────────────────────────────────
@@ -319,14 +358,43 @@
     return slugs;
   }
 
-  function findCardNameElement(productLink) {
+  /**
+   * Find the icon row (ProductClassifiersTile) for a product card.
+   * Falls back to the product name <p> or the link itself.
+   */
+  const ICON_ROW_ATTR = 'data-upf-icon-row';
+
+  function findBadgeTarget(productLink) {
+    const article = productLink.closest('article');
+    if (article) {
+      // Check if we already badged this article
+      if (article.querySelector('[' + BADGE_ATTR + ']')) return { element: null, isIconRow: true };
+
+      // Look for the classifier icon row inside the image box
+      const iconRow = article.querySelector('[class*="ProductClassifiersTile"]');
+      if (iconRow) return { element: iconRow, isIconRow: true };
+
+      // Check for a previously created icon row
+      const existing = article.querySelector('[' + ICON_ROW_ATTR + ']');
+      if (existing) return { element: existing, isIconRow: true };
+
+      // If no icon row exists, try to create one inside ProductTileImageBox
+      const imageBox = article.querySelector('[class*="ProductTileImageBox"]');
+      if (imageBox) {
+        const newRow = document.createElement('div');
+        newRow.setAttribute(ICON_ROW_ATTR, '');
+        newRow.style.cssText = 'display:flex;gap:4px;flex-direction:row;position:absolute;bottom:2px;left:2px;';
+        imageBox.appendChild(newRow);
+        return { element: newRow, isIconRow: true };
+      }
+    }
+    // Fallback for non-card contexts (detail page h1, etc.)
     const nameEl = productLink.querySelector('p');
-    if (nameEl) return nameEl;
-    return productLink;
+    return { element: nameEl || productLink, isIconRow: false };
   }
 
   async function fetchAndBadgeProducts(slugs) {
-    const CONCURRENCY = 4;
+    const CONCURRENCY = 8;
     let index = 0;
 
     async function worker() {
@@ -334,6 +402,8 @@
         const current = slugs[index++];
         const { id, slug, link } = current;
 
+        const article = link.closest('article');
+        if (article?.querySelector('[' + BADGE_ATTR + ']')) continue;
         if (link.querySelector('[' + BADGE_ATTR + ']')) continue;
 
         let result = cache.get(id);
@@ -347,8 +417,8 @@
         if (result && !result.noIngredients) {
           const freshLink = document.querySelector(`a[href*="/products/${slug}"]`);
           if (freshLink) {
-            const nameEl = findCardNameElement(freshLink);
-            insertBadge(nameEl, result.isUPF, result.matches);
+            const { element, isIconRow } = findBadgeTarget(freshLink);
+            insertBadge(element, result.isUPF, result.matches, isIconRow);
           }
         }
       }
@@ -358,10 +428,19 @@
   }
 
   async function scanListingProducts() {
+    // If we're on a detail page, get its product id so we skip it in listing scan
+    const detailMatch = location.pathname.match(/\/products\/(\d+)-/);
+    const detailId = detailMatch ? detailMatch[1] : null;
+
     const slugs = getProductSlugsFromPage();
-    const unbadged = slugs.filter(({ link }) => {
-      const nameEl = findCardNameElement(link);
-      return nameEl && !nameEl.hasAttribute(BADGE_ATTR);
+    const unbadged = slugs.filter(({ id, link }) => {
+      // Skip the product that's shown in the detail/modal view (handled by scanDetailView)
+      if (id === detailId) return false;
+      // Quick check: if the article already has a badge, skip
+      const article = link.closest('article');
+      if (article?.querySelector('[' + BADGE_ATTR + ']')) return false;
+      if (link.querySelector('[' + BADGE_ATTR + ']')) return false;
+      return true;
     });
 
     if (unbadged.length === 0) return;
@@ -376,13 +455,12 @@
   }
 
   async function scan() {
-    // Always scan listing products (cards may be visible behind a modal)
-    await scanListingProducts();
-
-    // If we're on a product URL (full page or modal), also scan the detail view
     if (hasProductInUrl()) {
+      // Fire detail scan immediately so the badge appears without waiting for listings
       await scanDetailView();
     }
+    // Scan listing cards in background (don't block on it)
+    scanListingProducts();
   }
 
   // Initial scan
@@ -431,6 +509,27 @@
     childList: true,
     subtree: true,
   });
+
+  // Listen for settings changes from popup — clear cache and re-scan
+  if (chrome?.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'sync' && (changes.disabledCategories || changes.customMarkers || changes.removedMarkers)) {
+        log('Settings changed, re-scanning...');
+        // Update the active markers in upf-rules
+        if (typeof loadSettingsSync === 'function') loadSettingsSync();
+        cache.clear();
+        // Remove existing badges so they get re-created
+        document.querySelectorAll('[' + BADGE_ATTR + ']').forEach(el => {
+          el.removeAttribute(BADGE_ATTR);
+          el.querySelectorAll('.upf-badge-wrapper').forEach(w => {
+            if (w._upfTooltip) w._upfTooltip.remove();
+            w.remove();
+          });
+        });
+        debouncedScan();
+      }
+    });
+  }
 
   log('JunkBlock initialized');
 })();

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "JunkBlock",
   "version": "0.1.0",
-  "description": "Se om matvarer på Oda er ultraprosessert før de havner i handlekurven. Matvarer som er klassifisert som ultraprosessert i henhold til NOVA-klassifiseringen.",
+  "description": "Se om matvarer på Oda er ultraprosessert (NOVA 4) før de havner i handlekurven.",
   "content_scripts": [
     {
       "matches": [
@@ -14,7 +14,9 @@
       "run_at": "document_idle"
     }
   ],
+  "permissions": ["storage"],
   "action": {
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

@@ -12,11 +12,11 @@
   --upf-red-border: #fecaca;
   --upf-red-text: #7f1d1d;
 
-  /* Clean (Ren) — Nordic Garden Green */
-  --upf-clean: #15803d;
-  --upf-clean-bg: #f0fdf4;
-  --upf-clean-border: #bbf7d0;
-  --upf-clean-text: #166534;
+  /* Clean (Ikke UPF) — Neutral Grey */
+  --upf-clean: #6b7280;
+  --upf-clean-bg: #f9fafb;
+  --upf-clean-border: #e5e7eb;
+  --upf-clean-text: #4b5563;
 
   --upf-radius: 12px;
   --upf-font: "Inter var", "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -72,7 +72,13 @@
 }
 
 .upf-badge--clean:hover {
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+}
+
+/* ---------- Icon row placement (ProductClassifiersTile) ---------- */
+.upf-badge-wrapper--icon-row {
+  margin-left: auto;
+  animation: none;
 }
 
 /* ---------- Small dot indicator inside badge ---------- */
@@ -228,10 +234,10 @@
     --upf-red-border: #7f1d1d;
     --upf-red-text: #fca5a5;
 
-    --upf-clean: #4ade80;
-    --upf-clean-bg: #1a3a24;
-    --upf-clean-border: #166534;
-    --upf-clean-text: #4ade80;
+    --upf-clean: #9ca3af;
+    --upf-clean-bg: #1f2937;
+    --upf-clean-border: #374151;
+    --upf-clean-text: #9ca3af;
   }
 
   .upf-tooltip {
