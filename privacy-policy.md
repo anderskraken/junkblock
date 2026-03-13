@@ -20,8 +20,9 @@ JunkBlock does **not** collect, store, or transmit any personal data or browsing
 
 ## Permissions
 
-JunkBlock only accesses pages on `oda.com/no` and `oda.no` to read product information. No other permissions are required.
+- **Host access:** JunkBlock only accesses pages on `oda.com/no` and `oda.no` to read product information.
+- **Storage:** Used to save your settings (marker category preferences, custom markers). No personal data is stored.
 
 ## Contact
 
-If you have questions about this privacy policy, please open an issue at: https://github.com/andersnas/junkblock/issues
+If you have questions about this privacy policy, please open an issue at: https://github.com/anderskraken/junkblock/issues
