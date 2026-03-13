@@ -25,4 +25,7 @@ JunkBlock does **not** collect, store, or transmit any personal data or browsing
 
 ## Contact
 
-If you have questions about this privacy policy, please open an issue at: https://github.com/anderskraken/junkblock/issues
+If you have questions about this privacy policy:
+
+- Open an issue: https://github.com/anderskraken/junkblock/issues
+- Email: numeric-softy-2t@icloud.com

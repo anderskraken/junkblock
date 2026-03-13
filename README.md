@@ -82,6 +82,11 @@ icons/           — Extension icons (16, 48, 128px)
 privacy-policy.md — Privacy policy
 ```
 
+## Contact
+
+- Issues: https://github.com/anderskraken/junkblock/issues
+- Email: numeric-softy-2t@icloud.com
+
 ## License
 
 MIT
