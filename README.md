@@ -1,19 +1,24 @@
 # JunkBlock
 
-Chrome extension that labels food products on [oda.com](https://oda.com/no/) as ultra-processed (UPF) or not, based on the NOVA classification system.
+Chrome extension that labels food products on [Oda](https://oda.com/no/) and [Mathem](https://www.mathem.se/) as ultra-processed (UPF) or not, based on the NOVA classification system.
 
 ## What it does
 
-JunkBlock scans product pages on Oda and adds badges to each product:
+JunkBlock scans product pages and adds badges to each product:
 
 - **Ultra** (red) — contains ultra-processed ingredients (NOVA Group 4)
 - **Ikke UPF** (grey) — no ultra-processed markers found
 
 Click an Ultra badge to see which specific markers were detected (e.g., emulgator, maltodekstrin, E621).
 
+## Supported stores
+
+- [Oda](https://oda.com/no/) (oda.com, oda.no) — Norwegian online grocery
+- [Mathem](https://www.mathem.se/) (mathem.se) — Swedish online grocery
+
 ## How it works
 
-1. Extracts ingredient lists from Oda's Next.js data routes
+1. Extracts ingredient lists via Next.js data routes
 2. Scans ingredients against a curated list of NOVA Group 4 markers (Norwegian + Swedish)
 3. Checks for UPF indicator substances, cosmetic additives, and non-whitelisted E-numbers
 4. Adds badges to product image icon rows on listing pages and detail pages
@@ -30,7 +35,7 @@ Or sideload for development:
 2. Open `chrome://extensions` in Chrome
 3. Enable "Developer mode" (top right)
 4. Click "Load unpacked" and select this folder
-5. Browse [oda.com/no](https://oda.com/no/) — badges appear automatically
+5. Browse [oda.com/no](https://oda.com/no/) or [mathem.se](https://www.mathem.se/) — badges appear automatically
 
 ## Settings
 
@@ -50,9 +55,9 @@ The detection engine uses categorized UPF markers:
 - **Modified fats** — hydrogenated, interesterified fats
 - **Modified starch**
 - **Protein isolates** — soy protein isolate, whey protein, casein, hydrolyzed protein, mechanically separated meat
-- **Emulsifiers & stabilizers** — emulsifiers, stabilizers, thickeners, carrageenan
+- **Emulsifiers & stabilizers** — emulsifiers, stabilizers, thickeners, gelling agents, carrageenan
 - **Colorings & flavor enhancers** — colorants, MSG, flavor enhancers
-- **Flavorings** — aroma (excluding "naturlig aroma")
+- **Flavorings** — aroma/arom (excluding natural flavorings)
 - **Sweeteners** — aspartame, sucralose, acesulfame, sugar alcohols, etc.
 - **Preservatives** — sodium benzoate, potassium sorbate, sodium nitrite, etc.
 - **E-numbers** — any E-number not on the ~40-item whitelist of natural/traditional additives (e.g., E330 citric acid, E322 lecithin, E500 baking soda are whitelisted)
@@ -67,8 +72,9 @@ All analysis happens locally in your browser. No data is collected or transmitte
 
 - Manifest V3, content script + settings popup
 - Uses `storage` permission for user preferences only
-- Fetches ingredient data via Oda's public Next.js data routes (no API keys)
+- Fetches ingredient data via public Next.js data routes (no API keys)
 - Concurrent fetching (8 parallel) with debounced scanning
+- Site detection auto-selects correct path prefix (/no/ for Oda, /se/ for Mathem)
 
 ## Files
 
