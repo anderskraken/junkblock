@@ -1,5 +1,6 @@
 // JunkBlock — Content Script
-// Scans oda.com/no product pages for ingredient lists and adds Ultra/Ren badges.
+// Scans product pages for ingredient lists and adds Ultra/Ren badges.
+// Supports Oda (oda.com, oda.no) and Mathem (mathem.se).
 // Uses Next.js __NEXT_DATA__ and data routes for reliable ingredient extraction.
 
 (function () {
@@ -7,6 +8,11 @@
 
   const BADGE_ATTR = 'data-upf-badge';
   const DEBUG = false;
+
+  // ─── Site Detection ─────────────────────────────────────────────
+  const host = location.hostname;
+  const isMathem = host === 'www.mathem.se' || host === 'mathem.se';
+  const SITE_PATH_PREFIX = isMathem ? '/se' : '/no';
 
   // Prevent multiple initializations (SPA re-injection)
   if (window.__upfMarkerInitialized) return;
@@ -76,8 +82,8 @@
     const buildId = getBuildId();
     if (!buildId || !slug) return null;
 
-    const cleanSlug = slug.replace(/^\/no\/products\//, '').replace(/\/$/, '');
-    const url = `/_next/data/${buildId}/no/products/${cleanSlug}.json`;
+    const cleanSlug = slug.replace(/^\/(no|se)\/products\//, '').replace(/\/$/, '');
+    const url = `/_next/data/${buildId}${SITE_PATH_PREFIX}/products/${cleanSlug}.json`;
 
     try {
       const resp = await fetch(url);
@@ -138,7 +144,7 @@
 
     const heading = document.createElement('div');
     heading.className = 'upf-tooltip__heading';
-    heading.textContent = `${matches.length} ultra-markør${matches.length > 1 ? 'er' : ''} funnet`;
+    heading.textContent = `${matches.length} UPF-markør${matches.length > 1 ? 'er' : ''} funnet`;
     tooltip.appendChild(heading);
 
     const list = document.createElement('ul');
@@ -234,7 +240,7 @@
       wrapper._upfBadge = badge;
     } else {
       wrapper.appendChild(badge);
-      badge.setAttribute('title', 'Ingen ultra-markører funnet – ikke UPF');
+      badge.setAttribute('title', 'Ingen UPF-markører funnet');
     }
 
     target.setAttribute(BADGE_ATTR, isUPF ? 'upf' : 'clean');
@@ -242,7 +248,7 @@
     if (isIconRow) {
       // In icon row: append as flex item (margin-left: auto pushes it right)
       target.appendChild(wrapper);
-    } else if (target.tagName.match(/^H[1-6]$/) || target.tagName === 'P') {
+    } else if (target.tagName.match(/^H[1-6]$/) || target.tagName === 'P' || target.tagName === 'A') {
       target.appendChild(document.createTextNode(' '));
       target.appendChild(wrapper);
     } else {

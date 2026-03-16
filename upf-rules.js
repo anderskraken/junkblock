@@ -18,9 +18,15 @@ const MARKER_CATEGORIES = [
       'dekstrose',
       'isoglukose',
       'druesukker',        // NO alt. for dextrose
-      'glukossirap',       // SV glucose syrup
-      'fruktossirap',      // SV fructose syrup
-      'druvsocker',        // SV dextrose/grape sugar
+      'glukossirap',            // SV glucose syrup
+      'fruktossirap',           // SV fructose syrup
+      'glukos-fruktossirap',    // SV glucose-fructose syrup
+      'fruktos-glukossirap',    // SV fructose-glucose syrup
+      'druvsocker',             // SV dextrose/grape sugar
+      'invertsocker',           // SV invert sugar
+      'invertsockersirap',      // SV invert sugar syrup
+      'maltodextrin',           // SV maltodextrin (x not k)
+      'dextros',                // SV dextrose (x not k)
     ],
   },
   {
@@ -31,6 +37,9 @@ const MARKER_CATEGORIES = [
       'hydrogenert',
       'interesterifisert',
       'härdat fett',       // SV hardened fat
+      'fullhärdat',        // SV fully hydrogenated
+      'delvis härdat',     // SV partially hydrogenated
+      'hydrogenerad',      // SV hydrogenated
     ],
   },
   {
@@ -79,6 +88,7 @@ const MARKER_CATEGORIES = [
       'emulgeringsmedel',     // SV emulsifier
       'stabiliseringsmedel',  // SV stabilizer
       'förtjockningsmedel',   // SV thickener
+      'geleringsmedel',       // SV gelling agent
     ],
   },
   {
@@ -87,7 +97,8 @@ const MARKER_CATEGORIES = [
     markers: [
       'fargestoff',
       'fargstoff',
-      'färgämne',    // SV colorant
+      'färgämne',    // SV colorant (singular)
+      'färgämnen',   // SV colorant (plural)
     ],
   },
   {
@@ -106,6 +117,7 @@ const MARKER_CATEGORIES = [
     markers: [
       'aroma',
       'arom',              // SV flavoring (word-boundary matched)
+      'aromer',            // SV flavorings (plural)
       'aromastoff',
       'naturidentisk aroma',
     ],
@@ -127,6 +139,9 @@ const MARKER_CATEGORIES = [
       'maltitol',
       'isomalt',
       'sötningsmedel',    // SV sweetener
+      'sukralos',         // SV sucralose
+      'cyklamat',         // SV cyclamate
+      'sackarin',         // SV saccharin
     ],
   },
   {
@@ -140,6 +155,7 @@ const MARKER_CATEGORIES = [
       'natriumnitritt',
       'natriumnitrat',
       'konserveringsmedel',  // SV preservative
+      'natriumnitrit',       // SV sodium nitrite (single T)
     ],
   },
   {
@@ -149,8 +165,10 @@ const MARKER_CATEGORIES = [
       'antiklumpemiddel',
       'surhetsregulerende',
       'fuktighetsbevarende',
-      'antiklumpmedel',      // SV anti-caking
-      'surhetsreglerande',   // SV acidity regulator
+      'antiklumpmedel',           // SV anti-caking
+      'klumpförebyggande medel',  // SV anti-caking (official term)
+      'surhetsreglerande',        // SV acidity regulator
+      'fuktighetsbevarande medel', // SV humectant
     ],
   },
   {
@@ -276,9 +294,9 @@ function classifyIngredients(text, activeMarkers) {
   for (const marker of markers) {
     // Special handling for 'aroma'/'arom': word-boundary match to avoid
     // matching inside 'aromastoff' etc.
-    if (marker === 'aroma' || marker === 'arom') {
+    if (marker === 'aroma' || marker === 'arom' || marker === 'aromer') {
       const re = new RegExp('\\b' + marker + '\\b', 'i');
-      if (re.test(text) && !/\bnaturlig aroma\b/i.test(lower)) {
+      if (re.test(text) && !/\bnaturlig(?:a|t)? arom(?:a|er)?\b/i.test(lower)) {
         matches.push(marker);
       }
       continue;

@@ -2,12 +2,14 @@
   "manifest_version": 3,
   "name": "JunkBlock",
   "version": "0.1.0",
-  "description": "Se om matvarer på Oda er ultraprosessert (NOVA 4) før de havner i handlekurven.",
+  "description": "Se om matvarer er ultraprosessert (NOVA 4) før de havner i handlekurven. Støtter Oda og Mathem.",
   "content_scripts": [
     {
       "matches": [
         "*://oda.com/no/*",
-        "*://oda.no/*"
+        "*://oda.no/*",
+        "*://www.mathem.se/*",
+        "*://mathem.se/*"
       ],
       "js": ["upf-rules.js", "content.js"],
       "css": ["styles.css"],
